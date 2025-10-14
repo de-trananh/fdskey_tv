@@ -106,11 +106,45 @@ void main_menu_loop()
   if (button_left_holding())
   {
     fdskey_settings.remember_last_state_mode = REMEMBER_LAST_STATE_NONE;
+    fdskey_settings.display_games_list_mode  = GAMES_LIST_ON_OLED;
     settings_save();
   }
 
+  //Load the ROMs menu immediately when GAMES_LIST_ON_TV is set
+  if(fdskey_settings.display_games_list_mode == GAMES_LIST_ON_TV)
+  {
+	 char Menu_1in1_Game_Name[13] = "";//12 Byte, Included End Of String byte
+
+	 while(1)//Just stay within this while when browse ROMs on TV
+	 {
+		 //Ini menu selection state
+		 fds_menu_selection_state = ON_TV_LIST_SHOW;
+		 // reset state
+		 fdskey_settings.last_directory[0] = 0;
+		 fdskey_settings.last_file[0] = 0;
+
+		 if(fds_setup_menu_buffer(Menu_1in1_Game_Name) == 1)
+		 {
+			 //In case of Just only 1 game in disk, Load game immediately. Do not browse ROMs
+			 fds_menu_selection_state = ON_TV_LIST_PLAY_GAME;
+			 strcpy(selected_file.fname, Menu_1in1_Game_Name);
+			 strcpy(fdskey_settings.last_directory, "0:\\");
+			 strcat(fdskey_settings.last_directory, selected_file.fname);
+			 fr = f_stat(fdskey_settings.last_directory, &selected_file);
+			 strcpy(fdskey_settings.last_directory, "0:");
+		 }
+		 else
+		 {
+			//In case of more than 1 game, browse ROMs on TV
+			strcpy(fdskey_settings.last_directory, "0:");
+			strcpy(selected_file.fname, "<<menu>>.fds");
+		 }
+		 fds_side_select(fdskey_settings.last_directory, &selected_file, 1);
+		 HAL_Delay(1500);//Wait a moment to reload Menu after non-fatal error
+	 }
+  }
   // check and restore last state
-  if (fdskey_settings.remember_last_state_mode == REMEMBER_LAST_STATE_NONE)
+  else if (fdskey_settings.remember_last_state_mode == REMEMBER_LAST_STATE_NONE)
   {
     // reset state
     fdskey_settings.last_directory[0] = 0;
