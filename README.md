@@ -5,6 +5,7 @@
   - On TV: The game list will appear on the TV.
   <img width="1044" height="426" alt="image" src="https://github.com/user-attachments/assets/5f57958c-ac6e-4bbc-ae0c-ced38ff20312" />
   <img width="539" height="533" alt="image" src="https://github.com/user-attachments/assets/71ecaed7-5de9-4d8e-a12b-35cf975f30a2" />
+
   - On OLED: Browse games on the OLED display, just like the original FDSKey.
   <img width="1192" height="495" alt="image" src="https://github.com/user-attachments/assets/065859bd-ec1a-4980-a8ae-57a0496fa157" />
 * For details, please see this demonstration: https://www.youtube.com/watch?v=ZjAdUov6Ob8
