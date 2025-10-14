@@ -89,6 +89,12 @@ void show_error_screen(char *text, uint8_t fatal)
 void show_error_screen_fr(FRESULT fr, uint8_t fatal)
 {
   char *text;
+
+  //When browse ROM via TV, just reload the menu when the file has issue.
+  if((fdskey_settings.display_games_list_mode  == GAMES_LIST_ON_TV)&&
+    		  (!fatal))
+	  return;
+
   switch ((int)fr)
   {
     case FR_OK: return;        /* (0) Succeeded */
