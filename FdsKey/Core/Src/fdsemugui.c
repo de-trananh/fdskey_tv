@@ -205,18 +205,46 @@ FRESULT fds_gui_load_side(char *filename, char *game_name, uint8_t *side, uint8_
     {
       show_saving_screen();
       fr = fds_save();
+
+      if((fdskey_settings.display_games_list_mode  == GAMES_LIST_ON_TV)&&
+      		 (fds_menu_selection_state == ON_TV_LIST_SELECTED))//Selected a game in menu
+      		  	  return fr;
+
       if (fr != FR_OK)
         return fr;
     }
 
     cmd = 0;
-    if (button_left_newpress())
-        break;
-    button_right_newpress(); // to reset
-    if (button_up_newpress() && *side > 0)
-      cmd = 1;
-    if (button_down_newpress() && *side + 1 < side_count)
-      cmd = 2;
+
+    if((fdskey_settings.display_games_list_mode == GAMES_LIST_ON_TV)&&(fds_menu_selection_state == ON_TV_LIST_PLAY_GAME))
+    {
+    		if(fds_get_state() == FDS_IDLE)
+			{
+				//Allow U and D only to protect Automation states
+				button_left_newpress();  // to reset
+				button_right_newpress(); // to reset
+				if (button_up_newpress() && *side > 0)
+				  cmd = 1;
+				if (button_down_newpress() && *side + 1 < side_count)
+				  cmd = 2;
+			}
+    }
+    else
+    {
+    	//Known Issue when using FDSKey
+    	//Do not interrupted R/W, if so, some failure shall happen.
+    	if(fds_get_state() == FDS_IDLE)
+    	{
+			if (button_left_newpress())
+				break;
+			button_right_newpress(); // to reset
+			if (button_up_newpress() && *side > 0)
+			  cmd = 1;
+			if (button_down_newpress() && *side + 1 < side_count)
+			  cmd = 2;
+    	}
+    }
+
     if (cmd)
     {
       // need to change side
@@ -234,7 +262,7 @@ FRESULT fds_gui_load_side(char *filename, char *game_name, uint8_t *side, uint8_
       }
       for (i = 0; i < 20; i++)
       {
-        HAL_Delay(FDS_GUI_SIDE_SWITCH_DELAY / 20);
+        HAL_Delay(FDS_GUI_SIDE_SWITCH_DELAY / 160);
         fds_gui_draw_side_changing((cmd == 1 && !(*side & 1)) || (cmd == 2 && (*side & 1)), i);
         oled_update_invisible();
         oled_switch_to_invisible();
