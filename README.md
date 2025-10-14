@@ -1,3 +1,17 @@
+# FDSKeyTv
+* Functions just like the original FDSKey.
+* One new feature has been added to the settings list, allowing you to choose how to browse games:
+  - On TV: The game list will appear on the TV screen.
+  - On OLED: Browse games on the OLED display, just like the original FDSKey.
+* For details, please see this demonstration: https://www.youtube.com/watch?v=ZjAdUov6Ob8
+
+## Keynotes:
+* After select <onTV> of GAME LIST option, you need to reboot device to enter to on TV menu mode. The prevention for the failure of ROMS browsing after select <onTV> of GAME LIST option is now not available.
+* In TV mode, the 'L' and 'R' buttons are disabled to preserve <<menu>> function's states.
+* When the FDSKey is performing read/write operations to the FDS device, all button functions are restricted to prevent certain known state machine failures.
+* To switch over to original FDSKey feature, just hold 'L' button during  power up.
+* Due to limited of resource consumption of stm32g0 uC, rough estimation of num of ROMs can be browsed on TV currently is around 500 files.
+
 # FDSKey
 An open-source, low-cost, and easy-to-build Famicom Disk System drive emulator featuring a sleek OLED display.
 
