@@ -13,7 +13,7 @@
 #define SETTINGS_AUTO_OFF_SCREEN_TIME_MAX 300
 #define SETTINGS_AUTO_OFF_SCREEN_TIME_STEP 5
 
-#define SETTINGS_ITEM_COUNT 10
+#define SETTINGS_ITEM_COUNT 11
 typedef enum
 {
   SETTING_FAST_REWIND = 0,
@@ -26,7 +26,8 @@ typedef enum
   SETTING_BRIGHTNESS,
   SETTING_INVERT_SCREEN,
   SETTING_LEFTY_MODE,
-  SETTING_AUTO_OFF_SCREEN_TIME
+  SETTING_AUTO_OFF_SCREEN_TIME,
+  SETTING_DISPLAY_GAMES_LIST_MODE
 } SETTING_ID;
 
 typedef enum __attribute__ ((__packed__))
@@ -57,6 +58,12 @@ typedef enum __attribute__ ((__packed__))
   REWIND_SPEED_TURBO
 } REWIND_SPEED;
 
+typedef enum __attribute__ ((__packed__))
+{
+  GAMES_LIST_ON_OLED = 0,
+  GAMES_LIST_ON_TV,
+} DISPLAY_GAMES_LIST_MODE;
+
 typedef struct __attribute__ ((packed))
 {
   char sig[sizeof(SETTINGS_SIGNATURE) + 1];
@@ -75,6 +82,7 @@ typedef struct __attribute__ ((packed))
   SAVES_MODE backup_original;
   char last_directory[3584];
   char last_file[FF_MAX_LFN + 1 /* 255 + 1 */];
+  uint8_t display_games_list_mode;
 } FDSKEY_SETTINGS;
 
 void settings_load();
