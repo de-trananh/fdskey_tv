@@ -3,8 +3,9 @@
 
 #include "main.h"
 #include "ff.h"
+#include "settings.h"
 
-#define FDS_USE_DYNAMIC_MEMORY
+//#define FDS_USE_DYNAMIC_MEMORY
 
 // hardware settings
 #define FDS_READ_PWM_TIMER htim3
@@ -49,6 +50,12 @@
 #define FDS_WRITE_CAPTURE_TIMER_CHANNEL_CONST FDS_TIMER_CHANNEL_CONST(FDS_WRITE_CAPTURE_TIMER_CHANNEL)
 #define FDS_WRITE_CAPTURE_DMA_TRIGGER_CONST FDS_TIMER_DMA_TRIGGER_CONST(FDS_WRITE_CAPTURE_TIMER_CHANNEL)
 
+#define FLASH_MENU_OFFSET      0x08070000
+#define FLASH_LISTFILE_OFFSET  0x1EFE
+#define FLASH_NUMFILE_OFFSET   0x1ED6
+#define FLASH_FILELEN_H_OFFSET 0x1ED3
+#define FLASH_FILELEN_L_OFFSET 0x1ED2
+
 typedef enum {
   FDS_OFF,                    // disk image is not loaded
   FDS_IDLE,                   // disk stopped
@@ -85,5 +92,17 @@ extern DMA_HandleTypeDef FDS_READ_DMA;
 extern TIM_HandleTypeDef FDS_WRITE_TIMER;
 extern DMA_HandleTypeDef FDS_WRITE_DMA;
 extern TIM_HandleTypeDef FDS_WRITE_CAPTURE_TIMER;
+
+
+extern char fds_menu_selected_file[13];//12 Bytes of file name and 1 end of string
+extern uint16_t fds_setup_menu_buffer(char* menu1in1_gamename);//return number of games in menu
+typedef enum
+{
+	ON_TV_LIST_INI,
+	ON_TV_LIST_SHOW,
+	ON_TV_LIST_SELECTED,
+	ON_TV_LIST_PLAY_GAME
+} FDS_TV_MENU_STATE;
+extern FDS_TV_MENU_STATE fds_menu_selection_state;
 
 #endif /* INC_FDSEMU_H_ */
