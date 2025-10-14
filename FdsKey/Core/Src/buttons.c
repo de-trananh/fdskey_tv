@@ -158,10 +158,10 @@ void button_check_screen_off()
     // time to wake up
     oled_send_command(OLED_CMD_SET_ON);
     last_active_time = HAL_GetTick();
-    // no newpresses!
-    up_pressed = 1;
-    down_pressed = 1;
-    left_pressed = 1;
-    right_pressed = 1;
+    // no newpresses! Almost decision is from L and R, so just restrict L and R when screen On
+    	//up_pressed = 1;
+    	//down_pressed = 1;
+    	left_pressed = 1;
+    	right_pressed = 1;
   }
 }
