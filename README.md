@@ -1,5 +1,5 @@
 # FDSKeyTv
-* Please use STM32CubeProgrammer to flash the menu rom file into 0x08070000
+* Please use STM32CubeProgrammer to flash the menu rom file "fdskey_tv_menu.bin" into 0x08070000
 * FDSKeyTv's functions just like the original FDSKey.
 * One new feature has been added to the settings list, allowing you to choose how to browse games:
   - On TV: The game list will appear on the TV.
