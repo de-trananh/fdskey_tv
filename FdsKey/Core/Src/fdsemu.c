@@ -5,14 +5,19 @@
 #include "settings.h"
 #include "ff.h"
 
+uint8_t fds_menu_selection_state = ON_TV_LIST_INI;
+char fds_menu_selected_file[13] = "";//12 Bytes of file name and 1 end of string
+
 static char fds_filename[FF_MAX_LFN + 1];
 static uint8_t fds_side;
 // loaded FDS data
 #ifdef FDS_USE_DYNAMIC_MEMORY
 static uint8_t * volatile fds_raw_data;
 #else
-static uint8_t volatile fds_raw_data[FDS_MAX_SIDE_SIZE];
+static uint8_t volatile fds_raw_data     [FDS_MAX_SIDE_SIZE];
 #endif
+static uint8_t fds_raw_data_multi_purpose[32*1024];
+
 static volatile uint8_t fds_read_buffer[FDS_READ_BUFFER_SIZE];
 static volatile int fds_used_space = 0;
 static volatile int fds_block_count = 0;
@@ -490,6 +495,72 @@ void fds_check_pins()
     fds_last_action_time = HAL_GetTick();
   }
 }
+uint16_t fds_setup_menu_buffer(char* menu1in1_gamename)
+{
+	FRESULT fr;
+	DIR dir;
+	uint32_t count = 0;
+	FILINFO finfo;
+	uint16_t TotalFileNamLen;
+	uint8_t TotalFileNamLen_H;
+	uint8_t TotalFileNamLen_L;
+	uint32_t FileCurrsor = 0;
+	uint8_t FilenamPost[2] = {0x00,0x00};
+	uint8_t i = 0;
+	uint8_t isFolder = 0;
+
+	memcpy(fds_raw_data_multi_purpose, (void*)FLASH_MENU_OFFSET,32*1024);
+
+	fr = f_opendir(&dir, "0:\\");
+	count = 0;
+	while(1)
+	{
+		isFolder = 0;
+		fr = f_readdir(&dir, &finfo);
+		if( fr!=FR_OK || finfo.fname[0]==0 )
+			break;
+		if(count > 0)//Do not record System Infor at finfo.xx[0]
+		{
+			//Ignore Folder
+			for(i = 0; i < 12; i++)
+			{
+				if(finfo.altname[i] == 0)
+				{
+					isFolder = 1;
+					break;
+				}
+				if(finfo.altname[i] == '.')
+					break;
+			}
+			if(isFolder)
+				continue;
+			else
+				strcpy(menu1in1_gamename, finfo.altname);
+
+			memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], finfo.altname, 12);
+			FileCurrsor+=12;
+			memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], finfo.fname, 26);
+			FileCurrsor+=26;
+			memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], FilenamPost, 2);
+			FileCurrsor+=2;
+		}
+		count++;
+	}
+	count-=1;//Do not record System Infor at finfo.xx[0]
+	TotalFileNamLen = (count*0x28)+0x28;
+	TotalFileNamLen_H = TotalFileNamLen >> 8;
+	TotalFileNamLen_L = TotalFileNamLen & 0x00FF;
+
+	FileCurrsor = FLASH_NUMFILE_OFFSET;
+	memcpy(&fds_raw_data_multi_purpose[FileCurrsor], &count, 1);
+	FileCurrsor = FLASH_FILELEN_H_OFFSET;
+	memcpy(&fds_raw_data_multi_purpose[FileCurrsor], &TotalFileNamLen_H, 1);
+	FileCurrsor = FLASH_FILELEN_L_OFFSET;
+	memcpy(&fds_raw_data_multi_purpose[FileCurrsor], &TotalFileNamLen_L, 1);
+
+	f_closedir(&dir);
+	return count; //return num of found games
+}
 
 // load .fds file and start drive emulation
 FRESULT fds_load_side(char *filename, uint8_t side, uint8_t ro)
@@ -512,6 +583,134 @@ FRESULT fds_load_side(char *filename, uint8_t side, uint8_t ro)
   HAL_GPIO_WritePin(FDS_READY_GPIO_Port, FDS_READY_Pin, GPIO_PIN_SET);
   // but media is inserted
   HAL_GPIO_WritePin(FDS_MEDIA_SET_GPIO_Port, FDS_MEDIA_SET_Pin, GPIO_PIN_RESET);
+
+if((fdskey_settings.display_games_list_mode  == GAMES_LIST_ON_TV)&&
+		  (fds_menu_selection_state == ON_TV_LIST_SHOW))
+{
+  uint32_t MenuCurrsor = 0;
+
+  // writable maybe
+  ro = 0;
+  fds_readonly = ro;
+  HAL_GPIO_WritePin(FDS_WRITABLE_MEDIA_GPIO_Port, FDS_WRITABLE_MEDIA_Pin, ro ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  // start ready state waiting before file loaded
+  fds_not_ready_time = HAL_GetTick();
+
+  fds_side = side;
+  MenuCurrsor = 0;
+
+  memset((uint8_t*)fds_raw_data, 0, FDS_MAX_SIDE_SIZE);
+
+  while (1)
+  {
+	// calculate total number of blocks based on file amount block
+	if (fds_block_count == 2)
+	  min_blocks = fds_raw_data[fds_block_offsets[1] + FDS_NEXT_GAPS_READ_BITS / 8 + 1] * 2 + 2; // files * 2 + header blocks;
+	fds_block_offsets[fds_block_count] = fds_used_space;
+	gap_length = fds_block_count == 0 ? FDS_FIRST_GAP_READ_BITS / 8 : FDS_NEXT_GAPS_READ_BITS / 8;
+	if (fds_used_space + gap_length > FDS_MAX_SIDE_SIZE)
+	{
+	  if (fds_block_count + 1 < min_blocks)
+	  {
+		fds_close(0);
+		return FDSR_ROM_TOO_LARGE;
+	  }
+	  break;
+	}
+	// gap before data
+	for (i = 0; i < gap_length - 1; i++)
+	{
+	  fds_raw_data[fds_used_space++] = 0;
+	  // check size
+	  if (fds_used_space - 1 >= FDS_MAX_SIDE_SIZE)
+	  {
+		if (fds_block_count + 1 < min_blocks)
+		{
+		  fds_close(0);
+		  return FDSR_ROM_TOO_LARGE;
+		}
+		fds_used_space -= i;
+		break;
+	  }
+	}
+	fds_raw_data[fds_used_space++] = 0x80; // gap terminator
+
+	if (fds_block_count == 0)
+	  // disk info block
+	  block_type = 1;
+	else if (fds_block_count == 1)
+	  // file amount block
+	  block_type = 2;
+	else if (fds_block_count % 2 == 0)
+	  // file header block
+	  block_type = 3;
+	else
+	  // file data block
+	  block_type = 4;
+	block_size = fds_get_block_size(fds_block_count, 0, 0);
+
+	// check size
+	if (fds_used_space + block_size + 2 /*CRC*/> FDS_MAX_SIDE_SIZE)
+	{
+	  if (fds_block_count + 1 < min_blocks)
+	  {
+		fds_close(0);
+		return FDSR_ROM_TOO_LARGE;
+	  }
+	  fds_raw_data[fds_used_space - 1] = 0; // remove terminator
+	  fds_used_space -= gap_length; // rollback last gap
+	  break;
+	}
+
+	// reading
+	memcpy((uint8_t*) fds_raw_data + fds_used_space, &fds_raw_data_multi_purpose[MenuCurrsor], block_size);
+	MenuCurrsor+=block_size;
+	if (MenuCurrsor >= 0x8000)
+	{
+	  // end of file?
+	  if (fds_block_count + 1 < min_blocks)
+	  {
+		fds_close(0);
+		return FDSR_INVALID_ROM;
+	  }
+	  fds_raw_data[fds_used_space - 1] = 0; // remove terminator
+	  fds_used_space -= gap_length; // rollback last gap
+	  break;
+	}
+	if (fds_raw_data[fds_used_space] != block_type)
+	{
+	  // invalid block?
+	  if (fds_block_count + 1 < min_blocks)
+	  {
+		fds_close(0);
+		return FDSR_INVALID_ROM;
+	  }
+	  fds_raw_data[fds_used_space - 1] = 0; // remove terminator
+	  fds_used_space -= gap_length; // rollback last gap
+	  break;
+	}
+	if (fds_block_count == 0)
+	{
+	  // check header
+	  const char signature[] = "*NINTENDO-HVC*";
+	  char verify[sizeof(signature)];
+	  memcpy(verify, fds_raw_data + fds_used_space + 1, sizeof(signature) - 1);
+	  verify[sizeof(signature) - 1] = 0;
+	  if (strcmp(verify, signature) != 0)
+	  {
+		fds_close(0);
+		return FDSR_INVALID_ROM;
+	  }
+	}
+	crc = fds_crc((uint8_t*) fds_raw_data + fds_used_space, block_size);
+	fds_used_space += block_size;
+	fds_raw_data[fds_used_space++] = crc & 0xFF;
+	fds_raw_data[fds_used_space++] = (crc >> 8) & 0xFF;
+	fds_block_count++;
+  }
+}
+else
+{
   // writable maybe
   fds_readonly = ro;
   HAL_GPIO_WritePin(FDS_WRITABLE_MEDIA_GPIO_Port, FDS_WRITABLE_MEDIA_Pin, ro ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -694,6 +893,7 @@ FRESULT fds_load_side(char *filename, uint8_t side, uint8_t ro)
 //  strcat(filename, ".good.bin");
 //  fds_dump(filename);
 
+}
   if (!HAL_GPIO_ReadPin(FDS_SCAN_MEDIA_GPIO_Port, FDS_SCAN_MEDIA_Pin) && (fdskey_settings.rewind_speed == REWIND_SPEED_TURBO))
     fds_state = FDS_READ_WAIT_READY_TIMER;
   else
@@ -727,6 +927,24 @@ FRESULT fds_save()
     uint8_t* crc = (uint8_t*)(fds_raw_data + fds_block_offsets[i] + (i == 0 ? FDS_FIRST_GAP_READ_BITS : FDS_NEXT_GAPS_READ_BITS) / 8 + block_size);
     if (valid_crc != (*crc | (*(crc + 1) << 8)))
       return FDSR_WRONG_CRC;
+  }
+
+  if((fdskey_settings.display_games_list_mode == GAMES_LIST_ON_TV)&&
+    		  ((fds_menu_selection_state == ON_TV_LIST_SHOW)))
+  {
+	fds_menu_selection_state = ON_TV_LIST_SELECTED;
+	for (i = 0; i < 32768; i++)
+	{
+		if(fds_raw_data[i] == 0xDB) {i++;break;}
+	}
+	memcpy(fds_menu_selected_file,&fds_raw_data[i],12);
+
+	// clear changed flag
+	fds_changed = 0;
+	// resume idle state
+	fds_check_pins();
+
+	return FR_OK;
   }
 
   char alt_filename[FF_MAX_LFN + 1];
