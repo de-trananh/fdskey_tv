@@ -197,7 +197,6 @@ void fds_side_select(char *directory, FILINFO *fno, uint8_t load_first)
 
   if (load_first)
   {
-	side_count = 1;
     // need to load first side
     fr = fds_gui_load_side(full_path, game_name, 0, side_count, fno->fattrib & AM_RDO);
     show_error_screen_fr(fr, fr < 0x80);
