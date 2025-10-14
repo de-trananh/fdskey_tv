@@ -130,7 +130,8 @@ void text_remove_brackets(char *text)
 void fds_side_select(char *directory, FILINFO *fno, uint8_t load_first)
 {
   FRESULT fr;
-  uint8_t side_count, side = 0;
+  uint8_t side_count = 0;
+  uint8_t side = 0;
   char game_name[256];
   int dl = strlen(directory);
   int fl = strlen(fno->fname);
@@ -163,17 +164,27 @@ void fds_side_select(char *directory, FILINFO *fno, uint8_t load_first)
 
   if (fno->fsize % FDS_ROM_SIDE_SIZE == FDS_ROM_HEADER_SIZE)
     fno->fsize -= FDS_ROM_HEADER_SIZE;
-  if (fno->fsize % FDS_ROM_SIDE_SIZE != 0)
+
+  if((fdskey_settings.display_games_list_mode  == GAMES_LIST_ON_TV)&&
+		  (fds_menu_selection_state == ON_TV_LIST_SHOW))
   {
-    show_error_screen_fr(FDSR_INVALID_ROM, 0);
-    return;
+	  //Do nothing, Just let it loads menu into FDS
+	  //No file system rules to be taken care
   }
-  side_count = fno->fsize / FDS_ROM_SIDE_SIZE;
-  if (!side_count)
+  else
   {
-    // empty ROM
-    show_error_screen_fr(FDSR_INVALID_ROM, 0);
-    return;
+	  if (fno->fsize % FDS_ROM_SIDE_SIZE != 0)
+	  {
+		show_error_screen_fr(FDSR_INVALID_ROM, 0);
+		return;
+	  }
+	  side_count = fno->fsize / FDS_ROM_SIDE_SIZE;
+	  if (!side_count)
+	  {
+		// empty ROM
+		show_error_screen_fr(FDSR_INVALID_ROM, 0);
+		return;
+	  }
   }
 
   if (side_count == 1)
@@ -186,9 +197,73 @@ void fds_side_select(char *directory, FILINFO *fno, uint8_t load_first)
 
   if (load_first)
   {
+	side_count = 1;
     // need to load first side
     fr = fds_gui_load_side(full_path, game_name, 0, side_count, fno->fattrib & AM_RDO);
     show_error_screen_fr(fr, fr < 0x80);
+  }
+
+  if((fdskey_settings.display_games_list_mode  == GAMES_LIST_ON_TV)&&
+  		  (fds_menu_selection_state == ON_TV_LIST_SELECTED))
+  {
+	  fds_menu_selection_state = ON_TV_LIST_PLAY_GAME;
+
+	  memset(game_name, 0 ,sizeof(game_name));
+	  for(i = 0; i < 12; i++)
+	  {
+		  if((fds_menu_selected_file[i] == '.')&&(i!=8))//file name is shorter then 12 bytes
+		  {
+			  memcpy(game_name, fds_menu_selected_file,(i+3)+1);
+			  break;
+		  }
+	  }
+	  strcpy(full_path, "0:\\");
+	  strcat(full_path, fds_menu_selected_file);
+	  strcpy(game_name,fds_menu_selected_file);
+	  strcpy(fno->fname,game_name);
+	  fr = f_stat(full_path, fno);
+
+	  // trim extension
+	   for (i = fl - 1; i >= 0; i--)
+	   {
+	     if (game_name[i] == '.')
+	     {
+	       game_name[i] = 0;
+	       break;
+	     }
+	   }
+	   // remove brackets
+	   text_remove_brackets(game_name);
+
+	   if (fno->fsize % FDS_ROM_SIDE_SIZE == FDS_ROM_HEADER_SIZE)
+		   fno->fsize -= FDS_ROM_HEADER_SIZE;
+		if (fno->fsize % FDS_ROM_SIDE_SIZE != 0)
+		{
+			show_error_screen_fr(FDSR_INVALID_ROM, 0);
+			return;
+		}
+		side_count = fno->fsize / FDS_ROM_SIDE_SIZE;
+		if (!side_count)
+		{
+			// empty ROM
+			show_error_screen_fr(FDSR_INVALID_ROM, 0);
+			return;
+		}
+
+	   if (side_count == 1)
+	   {
+	     // Single sided ROM, do not show side select dialog
+	     fr = fds_gui_load_side(full_path, game_name, &side, side_count, fno->fattrib & AM_RDO);
+	     show_error_screen_fr(fr, fr < 0x80);
+	     return;
+	   }
+
+	   if (load_first)
+	   {
+	     // need to load first side
+	     fr = fds_gui_load_side(full_path, game_name, 0, side_count, fno->fattrib & AM_RDO);
+	     show_error_screen_fr(fr, fr < 0x80);
+	   }
   }
 
   while (1)
