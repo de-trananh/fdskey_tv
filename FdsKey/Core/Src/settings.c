@@ -83,6 +83,18 @@ static void draw_item(uint8_t line, SETTING_ID item, uint8_t is_selected)
 
   switch (item)
   {
+  case SETTING_DISPLAY_GAMES_LIST_MODE:
+	parameter_name = "Games List";
+	switch (fdskey_settings.display_games_list_mode)
+	{
+	case GAMES_LIST_ON_OLED:
+      value = "<on Oled>";
+	  break;
+	case GAMES_LIST_ON_TV:
+      value = "<on TV>";
+	  break;
+	}
+	break;
   case SETTING_FAST_REWIND:
     parameter_name = "Rewind speed";
     switch (fdskey_settings.rewind_speed)
@@ -310,6 +322,12 @@ void settings_menu()
             fdskey_settings.backup_original++;
         }
         break;
+      case SETTING_DISPLAY_GAMES_LIST_MODE:
+    	  if(fdskey_settings.display_games_list_mode == GAMES_LIST_ON_OLED)
+    		  fdskey_settings.display_games_list_mode = GAMES_LIST_ON_TV;
+    	  else
+    		  fdskey_settings.display_games_list_mode = GAMES_LIST_ON_OLED;
+    	  break;
       default:
         settings_save();
         return;
