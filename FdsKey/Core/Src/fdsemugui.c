@@ -216,18 +216,21 @@ FRESULT fds_gui_load_side(char *filename, char *game_name, uint8_t *side, uint8_
 
     cmd = 0;
 
-    if((fdskey_settings.display_games_list_mode == GAMES_LIST_ON_TV)&&(fds_menu_selection_state == ON_TV_LIST_PLAY_GAME))
+    if(fdskey_settings.display_games_list_mode == GAMES_LIST_ON_TV)
     {
-    		if(fds_get_state() == FDS_IDLE)
+		if(fds_get_state() == FDS_IDLE)
+		{
+			//Allow U and D only to protect Automation states
+			button_left_newpress();  // to reset
+			button_right_newpress(); // to reset
+			if(fds_menu_selection_state == ON_TV_LIST_PLAY_GAME)
 			{
-				//Allow U and D only to protect Automation states
-				button_left_newpress();  // to reset
-				button_right_newpress(); // to reset
 				if (button_up_newpress() && *side > 0)
 				  cmd = 1;
 				if (button_down_newpress() && *side + 1 < side_count)
 				  cmd = 2;
 			}
+		}
     }
     else
     {
