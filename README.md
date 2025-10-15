@@ -11,7 +11,7 @@
 * For details, please see this demonstration: https://www.youtube.com/watch?v=ZjAdUov6Ob8
 
 ## Keynotes:
-* After select <onTV> of GAME LIST option, you need to reboot device to enter to on TV menu mode. The prevention for the failure of ROMS browsing after select <onTV> of GAME LIST option is now not available.
+* After select onTV mode of GAME LIST option, you need to reboot device to enter to on TV menu mode. The prevention for the failure of ROMS browsing after select <onTV> of GAME LIST option is now not available.
 * In TV mode, the 'L' and 'R' buttons are disabled to preserve <<menu>> function's states.
 * When the FDSKey is performing read/write operations to the FDS device, all button functions are restricted to prevent certain known state machine failures.
 * To switch over to original FDSKey feature, just hold 'L' button during  power up.
