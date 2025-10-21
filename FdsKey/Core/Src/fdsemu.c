@@ -547,6 +547,18 @@ uint16_t fds_setup_menu_buffer(char* menu1in1_gamename)
 		count++;
 	}
 	count-=1;//Do not record System Infor at finfo.xx[0]
+
+	//Patch the crashing problem from menu ROM
+	if((count >=24)&&((count%24) == 0))
+	{		count++;
+		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], "ENDMENU.FDS", 12);
+		FileCurrsor+=12;
+		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], "--------END OF MENU-------", 26);
+		FileCurrsor+=26;
+		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], FilenamPost, 2);
+		FileCurrsor+=2;
+	}
+	
 	TotalFileNamLen = (count*0x28)+0x28;
 	TotalFileNamLen_H = TotalFileNamLen >> 8;
 	TotalFileNamLen_L = TotalFileNamLen & 0x00FF;
