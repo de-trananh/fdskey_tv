@@ -1,3 +1,9 @@
+# FDSKeyTv Known issue list:
+##  Version 1.3.2:
+1) When the number of ROM is a multiple of 24 (fills 1 screen page). A screen crash will appear when changing to last page.
+    + Solution: Add 1 more  line to inform END OF MENU for next page and no impact when select that line.
+    + Fix version: 1.3.4
+
 # FDSKeyTv
 * Please use STM32CubeProgrammer to flash the menu rom file "fdskey_tv_menu.bin" into 0x08070000
 * FDSKeyTv's functions just like the original FDSKey.
