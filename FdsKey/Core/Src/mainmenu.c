@@ -140,7 +140,6 @@ void main_menu_loop()
 			strcpy(selected_file.fname, "<<menu>>.fds");
 		 }
 		 fds_side_select(fdskey_settings.last_directory, &selected_file, 1);
-		 HAL_Delay(1500);//Wait a moment to reload Menu after non-fatal error
 	 }
   }
   // check and restore last state
