@@ -550,8 +550,9 @@ uint16_t fds_setup_menu_buffer(char* menu1in1_gamename)
 
 	//Patch the crashing problem from menu ROM
 	if((count >=24)&&((count%24) == 0))
-	{		count++;
-		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], "ENDMENU.FDS", 12);
+	{
+		count++;
+		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], "~ENDMENU.QZX", 12); //Extension has unused probability based on GPT :)
 		FileCurrsor+=12;
 		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], "--------END OF MENU-------", 26);
 		FileCurrsor+=26;
