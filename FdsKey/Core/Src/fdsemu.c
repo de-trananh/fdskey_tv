@@ -552,7 +552,7 @@ uint16_t fds_setup_menu_buffer(char* menu1in1_gamename)
 	if((count >=24)&&((count%24) == 0))
 	{
 		count++;
-		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], "~ENDMENU.QZX", 12); //Extension has unused probability based on GPT :)
+		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], "123456789ABC" 12);
 		FileCurrsor+=12;
 		memcpy(&fds_raw_data_multi_purpose[FLASH_LISTFILE_OFFSET + FileCurrsor], "--------END OF MENU-------", 26);
 		FileCurrsor+=26;
