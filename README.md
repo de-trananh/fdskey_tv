@@ -1,4 +1,8 @@
 # FDSKeyTv Known issue list:
+##  Version 1.3.4:
+1) Bootloader updating in service menu is not possible due to Im using static RAM for FDS RAW DATA (Not dynamic). This cause the error about resoucre consumption when we select Bootloader update in service menu.
+    + Solution: Pending....
+    + Fix version: Pending...
 ##  Version 1.3.2:
 1) When the number of ROM is a multiple of 24 (fills 1 screen page). A screen crash will appear when changing to last page.
     + Solution: Add 1 more  line to inform END OF MENU for next page and no impact when select that line.
