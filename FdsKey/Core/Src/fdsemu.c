@@ -13,10 +13,12 @@ static uint8_t fds_side;
 // loaded FDS data
 #ifdef FDS_USE_DYNAMIC_MEMORY
 static uint8_t * volatile fds_raw_data;
+uint8_t * fds_raw_data_multi_purpose;
 #else
 static uint8_t volatile fds_raw_data     [FDS_MAX_SIDE_SIZE];
+uint8_t fds_raw_data_multi_purpose[32*1024];
 #endif
-static uint8_t fds_raw_data_multi_purpose[32*1024];
+
 
 static volatile uint8_t fds_read_buffer[FDS_READ_BUFFER_SIZE];
 static volatile int fds_used_space = 0;
@@ -509,6 +511,10 @@ uint16_t fds_setup_menu_buffer(char* menu1in1_gamename)
 	uint8_t i = 0;
 	uint8_t isFolder = 0;
 
+#ifdef FDS_USE_DYNAMIC_MEMORY
+	fds_raw_data_multi_purpose = malloc(32*1024* sizeof(uint8_t));
+#else
+#endif
 	memcpy(fds_raw_data_multi_purpose, (void*)FLASH_MENU_OFFSET,32*1024);
 
 	fr = f_opendir(&dir, "0:\\");
@@ -611,6 +617,11 @@ if((fdskey_settings.display_games_list_mode  == GAMES_LIST_ON_TV)&&
 
   fds_side = side;
   MenuCurrsor = 0;
+
+#ifdef FDS_USE_DYNAMIC_MEMORY
+  fds_raw_data = malloc(FDS_MAX_SIDE_SIZE * sizeof(uint8_t));
+  if (!fds_raw_data) return FDSR_OUT_OF_MEMORY;
+#endif
 
   memset((uint8_t*)fds_raw_data, 0, FDS_MAX_SIDE_SIZE);
 
@@ -721,6 +732,11 @@ if((fdskey_settings.display_games_list_mode  == GAMES_LIST_ON_TV)&&
 	fds_raw_data[fds_used_space++] = (crc >> 8) & 0xFF;
 	fds_block_count++;
   }
+#ifdef FDS_USE_DYNAMIC_MEMORY
+  free(fds_raw_data_multi_purpose);
+  fds_raw_data_multi_purpose = 0;
+#endif
+
 }
 else
 {
