@@ -5,7 +5,7 @@
 #include "ff.h"
 #include "settings.h"
 
-//#define FDS_USE_DYNAMIC_MEMORY
+#define FDS_USE_DYNAMIC_MEMORY
 
 // hardware settings
 #define FDS_READ_PWM_TIMER htim3
