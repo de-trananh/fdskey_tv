@@ -1,4 +1,9 @@
 # FDSKeyTv Known issue list:
+##  Version 1.3.5:
+1) When number of file is over 256, ROM menu counter is reset to 0 (Rom counter overflow).
+    + Rootcause: Num ber of ROM counter is using just only 1byte at offset 0x1ED6 is used for number of ROM couter while it is designed at 2bytes (offset 0x1ED6 as Low byte and offset 0x1ED7 as High byte).
+    + Solution: Use 2 bytes at offset 0x1ED6 as Low byte and offset 0x1ED7 as High byte for number of ROM counter.(Detailed in: MagicWildCardRom_Explaination.xlsx)
+    + Fix version: 1.3.6
 ##  Version 1.3.4:
 1) Bootloader updating in service menu is not possible due to Im using static RAM for FDS RAW DATA (Not dynamic). This cause the error about resoucre consumption when we select Bootloader update in service menu.
     + Solution: Changed to use dynamic RAM
