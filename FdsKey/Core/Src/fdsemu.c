@@ -570,8 +570,13 @@ uint16_t fds_setup_menu_buffer(char* menu1in1_gamename)
 	TotalFileNamLen_H = TotalFileNamLen >> 8;
 	TotalFileNamLen_L = TotalFileNamLen & 0x00FF;
 
-	FileCurrsor = FLASH_NUMFILE_OFFSET;
-	memcpy(&fds_raw_data_multi_purpose[FileCurrsor], &count, 1);
+	uint8_t TotalFile_L = (uint8_t)count;
+	uint8_t TotalFile_H = (uint8_t)(count>>8);
+	FileCurrsor = FLASH_NUMFILE_L_OFFSET;
+	memcpy(&fds_raw_data_multi_purpose[FileCurrsor], &TotalFile_L, 1);
+	FileCurrsor = FLASH_NUMFILE_H_OFFSET;
+	memcpy(&fds_raw_data_multi_purpose[FileCurrsor], &TotalFile_H, 1);
+
 	FileCurrsor = FLASH_FILELEN_H_OFFSET;
 	memcpy(&fds_raw_data_multi_purpose[FileCurrsor], &TotalFileNamLen_H, 1);
 	FileCurrsor = FLASH_FILELEN_L_OFFSET;
